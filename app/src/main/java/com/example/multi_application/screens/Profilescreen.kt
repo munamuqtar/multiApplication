@@ -72,8 +72,8 @@ private val supportLegalItems = listOf(
 )
 
 val sampleProfileUser = ProfileUser(
-    name = "Ahmed Ali",
-    email = "ahmed.ali@example.com",
+    name = "Muna ",
+    email = "muna@example.com",
     isVerifiedBuyer = true,
     memberTier = "Gold Member",
     walletBalance = "$1,240.00"

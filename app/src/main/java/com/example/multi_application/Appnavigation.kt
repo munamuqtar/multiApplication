@@ -33,33 +33,44 @@ import androidx.navigation.navArgument
 import java.net.URLDecoder
 import java.net.URLEncoder
 
+// NOTE: despite its filename, WelcomeScreen.kt does NOT define a WelcomeScreen
+// composable — it defines OnboardingScreen(onSkip, onFinish), which already
+// renders the purple hero screen internally as its first step. There is no
+// separate WelcomeScreen or SplashScreen composable in this project.
 import com.example.multi_application.authentication.LoginScreen
 import com.example.multi_application.authentication.OnboardingScreen
-import com.example.multi_application.authentication.RegisterScreen
-import com.example.multi_application.authentication.SplashScreen
+import com.example.multi_application.authentication.SignUpScreen
+import com.example.multi_application.authentication.VerificationScreen
+import com.example.multi_application.authentication.ForgotPasswordScreen
 import com.example.multi_application.screens.AddressesScreen
 import com.example.multi_application.screens.BecomeSellerScreen
 import com.example.multi_application.screens.CategoriesScreen
 import com.example.multi_application.screens.HomeScreen
 import com.example.multi_application.screens.MyOrdersScreen
-import com.example.multi_application.screens.ProductDetailsScreen
 import com.example.multi_application.screens.ProductListScreen
 import com.example.multi_application.screens.ProfileScreen
 import com.example.multi_application.screens.SearchScreen
 import com.example.multi_application.screens.SellerProfileScreen
 import com.example.multi_application.screens.WishlistScreen
-import com.example.multi_application.screens.sampleAureliaHandbag
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.multi_application.screens.FoodDetailsScreen
+import com.example.multi_application.screens.sampleAvocadaSalad
 import com.example.multi_application.screens.sampleElenaSeller
 
 // ---------------------------------------------------------------------------
 // Routes — every destination in the app now lives in ONE flat NavHost.
 // ---------------------------------------------------------------------------
 object Routes {
-    // Auth / onboarding flow
-    const val SPLASH = "splash"
+    // Auth / onboarding flow.
+    // Note: there is no separate splash route — OnboardingScreen renders the
+    // purple hero/welcome screen as its own first internal step.
     const val ONBOARDING = "onboarding"
     const val LOGIN = "login"
-    const val REGISTER = "register"
+    const val SIGN_UP = "signup"
+    const val FORGOT_PASSWORD = "forgotPassword"
+    const val VERIFICATION = "verification"
 
     // Main app (bottom-nav tabs)
     const val HOME = "home"
@@ -114,9 +125,10 @@ fun MultiMarketNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination
 
-    // Bottom bar only renders on the four tab routes — not on splash,
-    // onboarding, login, register, product list/details, search, seller
-    // profile, or the profile sub-screens (those draw their own bar).
+    // Bottom bar only renders on the four tab routes — not on onboarding,
+    // login, sign up, forgot password, verification, product list/details,
+    // search, seller profile, or the profile sub-screens (those draw their
+    // own bar).
     val showBottomBar = bottomNavTabs.any { tab ->
         currentRoute?.hierarchy?.any { it.route == tab.route } == true
     }
@@ -130,21 +142,11 @@ fun MultiMarketNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.SPLASH,
+            startDestination = Routes.ONBOARDING,
             modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
         ) {
 
             // ---------------- Auth / onboarding flow ----------------
-
-            composable(Routes.SPLASH) {
-                SplashScreen(
-                    onTimeout = {
-                        navController.navigate(Routes.ONBOARDING) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
-                    }
-                )
-            }
 
             composable(Routes.ONBOARDING) {
                 OnboardingScreen(
@@ -163,28 +165,64 @@ fun MultiMarketNavHost(
 
             composable(Routes.LOGIN) {
                 LoginScreen(
-                    onBack = { navController.popBackStack() },
-                    onForgotPassword = { /* TODO: navigate to forgot-password flow */ },
-                    onSignIn = { _, _, _ ->
+                    onForgotPassword = {
+                        navController.navigate(Routes.FORGOT_PASSWORD)
+                    },
+                    onSignIn = { _, _ ->
+                        // TODO: authenticate with the backend, then navigate to Home
                         navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                     },
-                    onGoogleSignIn = { /* TODO: trigger Google sign-in */ },
-                    onCreateAccount = { navController.navigate(Routes.REGISTER) }
+                    onSignUpClick = {
+                        navController.navigate(Routes.SIGN_UP)
+                    }
                 )
             }
 
-            composable(Routes.REGISTER) {
-                RegisterScreen(
-                    onBack = { navController.popBackStack() },
-                    onCreateAccount = { _ ->
+            composable(Routes.SIGN_UP) {
+                SignUpScreen(
+                    onForgotPassword = {
+                        navController.navigate(Routes.FORGOT_PASSWORD)
+                    },
+                    onSignUp = { formState ->
+                        // TODO: handle account creation with formState.name, formState.email, formState.password
                         navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            popUpTo(Routes.SIGN_UP) { inclusive = true }
                         }
                     },
-                    onTermsClick = { /* TODO: open Terms of Service */ },
-                    onPrivacyClick = { /* TODO: open Privacy Policy */ }
+                    onSignInClick = {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.SIGN_UP) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Routes.FORGOT_PASSWORD) {
+                ForgotPasswordScreen(
+                    onBack = { navController.popBackStack() },
+                    onSendResetLink = { _ ->
+                        // TODO: trigger the backend reset-link/OTP send with the email
+                        navController.navigate(Routes.VERIFICATION)
+                    }
+                )
+            }
+
+            composable(Routes.VERIFICATION) {
+                VerificationScreen(
+                    onBack = { navController.popBackStack() },
+                    onContinue = { _ ->
+                        // TODO: verify the code with the backend, then route to a
+                        // real "set new password" screen once it exists; for now
+                        // send the user back to Login.
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
+                    },
+                    onResend = {
+                        // TODO: re-trigger the backend to resend the code
+                    }
                 )
             }
 
@@ -311,14 +349,20 @@ fun MultiMarketNavHost(
             ) { backStackEntry ->
                 val productId = backStackEntry.arguments?.getString("productId")
                     ?.let { URLDecoder.decode(it, "UTF-8") }
-                // TODO: replace with a real lookup once products come from a
-                // repository/API; for now every id resolves to the sample product.
-                ProductDetailsScreen(
-                    product = sampleAureliaHandbag.copy(id = productId ?: sampleAureliaHandbag.id),
+
+                // Local favorite toggle state, scoped to this destination.
+                var isFavorite by remember { mutableStateOf(false) }
+
+                // TODO: replace with a real lookup once food items come from a
+                // repository/API; for now every id resolves to the sample dish.
+                FoodDetailsScreen(
+                    food = sampleAvocadaSalad.copy(id = productId ?: sampleAvocadaSalad.id),
+                    isFavorite = isFavorite,
                     onBackClick = { navController.popBackStack() },
-                    onSearchClick = { navController.navigate(Routes.SEARCH) },
-                    onVisitSellerClick = {
-                        navController.navigate(Routes.sellerProfile(sampleElenaSeller.id))
+                    onFavoriteToggle = { isFavorite = !isFavorite },
+                    onReadMoreClick = {
+                        // TODO: expand the description in place, or navigate to a
+                        // full-details/reviews screen once one exists.
                     }
                 )
             }

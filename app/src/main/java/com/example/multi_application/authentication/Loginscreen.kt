@@ -1,17 +1,15 @@
 package com.example.multi_application.authentication
 
-
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,208 +19,173 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
-private val PrimaryBlue = Color(0xFF3366FF)
-private val FieldGray = Color(0xFFF5F5F7)
-private val HintGray = Color(0xFF9A9AA0)
+import com.example.multi_application.R
+
+// ---------- Palette (green) ----------
+private val PrimaryGreen = Color(0xFF16A34A)
+private val FieldGray = Color(0xFFF3F4F8)
+private val HintGray = Color(0xFFAEAEB8)
+private val LabelGray = Color(0xFF6B6B76)
+private val TitleDark = Color(0xFF1C1C28)
 
 @Composable
 fun LoginScreen(
-    onBack: () -> Unit,
     onForgotPassword: () -> Unit,
-    onSignIn: (email: String, password: String, keepSignedIn: Boolean) -> Unit,
-    onGoogleSignIn: () -> Unit,
-    onCreateAccount: () -> Unit
+    onSignIn: (email: String, password: String) -> Unit,
+    onSignUpClick: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var keepSignedIn by remember { mutableStateOf(false) }
+
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        unfocusedContainerColor = FieldGray,
+        focusedContainerColor = FieldGray,
+        unfocusedBorderColor = Color.Transparent,
+        focusedBorderColor = PrimaryGreen,
+        cursorColor = PrimaryGreen
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 28.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Top bar: back + logo
-        Box(modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(36.dp)
-                    .background(PrimaryBlue, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Filled.Chat,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Welcome Back",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+        // Illustration image — swap in your own asset at
+        // res/drawable/img_login_illustration.xml (or .png/.webp)
+        Image(
+            painter = painterResource(id = R.drawable.img_login_illustration),
+            contentDescription = "Login illustration",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
         )
-        Spacer(modifier = Modifier.height(6.dp))
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         Text(
-            text = "Sign in to continue your premium shopping experience.",
-            fontSize = 14.sp,
-            color = HintGray,
-            lineHeight = 20.sp
+            text = "LogIn",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = TitleDark
         )
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Email field
-        Text("Email or Phone Number", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-        Spacer(modifier = Modifier.height(6.dp))
-        OutlinedTextField(
+        // ---------- Email ----------
+        LabeledField(
+            label = "Email",
             value = email,
             onValueChange = { email = it },
-            placeholder = { Text("name@example.com", color = HintGray) },
-            leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = HintGray) },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = FieldGray,
-                focusedContainerColor = FieldGray,
-                unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = PrimaryBlue
-            ),
-            modifier = Modifier.fillMaxWidth()
+            placeholder = "Enter Email",
+            colors = fieldColors,
+            keyboardType = KeyboardType.Email
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Password field + forgot password
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Password", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            Text(
-                text = "Forgot Password?",
-                fontSize = 12.sp,
-                color = PrimaryBlue,
-                modifier = Modifier.clickableText(onForgotPassword)
-            )
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        OutlinedTextField(
+        // ---------- Password ----------
+        LabeledField(
+            label = "Password",
             value = password,
             onValueChange = { password = it },
-            placeholder = { Text("Enter your password", color = HintGray) },
-            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = HintGray) },
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = "Toggle password visibility",
-                        tint = HintGray
-                    )
-                }
-            },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = FieldGray,
-                focusedContainerColor = FieldGray,
-                unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = PrimaryBlue
-            ),
-            modifier = Modifier.fillMaxWidth()
+            placeholder = "Enter Password",
+            colors = fieldColors,
+            isPassword = true
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Keep me signed in
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = keepSignedIn,
-                onCheckedChange = { keepSignedIn = it },
-                colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
-            )
-            Text("Keep me signed in", fontSize = 13.sp, color = Color(0xFF4A4A4F))
-        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = { onSignIn(email, password, keepSignedIn) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-        ) {
-            Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Divider "OR CONTINUE WITH"
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Divider(modifier = Modifier.weight(1f), color = Color(0xFFE5E5EA))
-            Text(
-                text = "  OR CONTINUE WITH  ",
-                fontSize = 11.sp,
-                color = HintGray
-            )
-            Divider(modifier = Modifier.weight(1f), color = Color(0xFFE5E5EA))
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedButton(
-            onClick = onGoogleSignIn,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            border = ButtonDefaults.outlinedButtonBorder,
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1A1A1A))
-        ) {
-            Text("Google", fontSize = 15.sp, fontWeight = FontWeight.Medium)
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
         Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                text = "Forget Password",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = PrimaryGreen,
+                modifier = Modifier.clickable(onClick = onForgotPassword)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { onSignIn(email, password) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.Center
+                .height(54.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
         ) {
-            Text("Don't have an account?  ", fontSize = 13.sp, color = HintGray)
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("LogIn", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row {
             Text(
-                text = "Create an account",
+                text = "Don't have any account?  ",
+                fontSize = 13.sp,
+                color = LabelGray
+            )
+            Text(
+                text = "sign up",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1A1A1A),
-                modifier = Modifier.clickableText(onCreateAccount)
+                color = PrimaryGreen,
+                modifier = Modifier.clickable(onClick = onSignUpClick)
             )
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
-private fun Modifier.clickableText(onClick: () -> Unit): Modifier =
-    this.clickable(onClick = onClick)
+@Composable
+private fun LabeledField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    colors: TextFieldColors,
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = LabelGray)
+        Spacer(modifier = Modifier.height(6.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholder, color = HintGray, fontSize = 14.sp) },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = colors,
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
